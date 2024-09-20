@@ -1,20 +1,21 @@
-import java.sql.*;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ReizigerDAOPsql implements ReizigerDAO{
-    private Connection conn;
+//    private Connection conn = Main.connection;
+    private AdresDAO adao;
+    private OVChipkaartDAO ovckdao;
 
-    public ReizigerDAOPsql(Connection conn) {
-        this.conn = conn;
-    }
-    
     @Override
     public boolean save(Reiziger reiziger) {
         try{
             String query = "INSERT INTO reiziger(reiziger_id, voorletters, tussenvoegsel, achternaam, geboortedatum) VALUES (?, ?, ?, ?, ?);";
 
-            PreparedStatement pst = this.conn.prepareStatement(query);
+            PreparedStatement pst = Main.connection.prepareStatement(query);
             pst.setInt(1,reiziger.getId());
             pst.setString(2, reiziger.getVoorletters());
             pst.setString(3, reiziger.getTussenvoegsel());
@@ -22,6 +23,15 @@ public class ReizigerDAOPsql implements ReizigerDAO{
             pst.setDate(5, reiziger.getGeboortedatum());
             pst.execute();
             pst.close();
+
+            if(this.adao != null && reiziger.getAdres() != null){
+                this.adao.save(reiziger.getAdres());
+            }
+            if(this.ovckdao != null && reiziger.getOvChipKaarten() != null){
+                for (OVChipkaart ovChipkaart: reiziger.getOvChipKaarten()){
+                    ovckdao.save(ovChipkaart);
+                }
+            }
             return true;
         }catch(SQLException sqle){
             System.err.println("[SQLException] Something went wrong with the SQL at save: " + sqle.getMessage());
@@ -34,7 +44,7 @@ public class ReizigerDAOPsql implements ReizigerDAO{
         try{
             String query = "UPDATE reiziger SET voorletters=?, tussenvoegsel=?, achternaam=?, geboortedatum=? WHERE reiziger_id=?";
 
-            PreparedStatement pst = this.conn.prepareStatement(query);
+            PreparedStatement pst = Main.connection.prepareStatement(query);
             pst.setString(1, reiziger.getVoorletters());
             pst.setString(2, reiziger.getTussenvoegsel());
             pst.setString(3, reiziger.getAchternaam());
@@ -42,9 +52,18 @@ public class ReizigerDAOPsql implements ReizigerDAO{
             pst.setInt(5,reiziger.getId());
             pst.execute();
             pst.close();
+
+            if(this.adao != null && reiziger.getAdres() != null){
+                this.adao.update(reiziger.getAdres());
+            }
+            if(this.ovckdao != null && reiziger.getOvChipKaarten() != null){
+                for (OVChipkaart ovChipkaart: reiziger.getOvChipKaarten()){
+                    ovckdao.update(ovChipkaart);
+                }
+            }
             return true;
         }catch(SQLException sqle){
-            System.err.println("[SQLException] Something went wrong with the SQL: " + sqle.getMessage());
+            System.err.println("[SQLException] Something went wrong with the SQL at Update: " + sqle.getMessage());
             return false;
         }
     }
@@ -52,15 +71,24 @@ public class ReizigerDAOPsql implements ReizigerDAO{
     @Override
     public boolean delete(Reiziger reiziger) {
         try{
+            if(this.adao != null && reiziger.getAdres() != null){
+                this.adao.delete(reiziger.getAdres());
+            }
+            if(this.ovckdao != null && reiziger.getOvChipKaarten() != null){
+                for (OVChipkaart ovChipkaart: reiziger.getOvChipKaarten()){
+                    ovckdao.delete(ovChipkaart);
+                }
+            }
+
             String query = "DELETE FROM reiziger WHERE reiziger_id=?";
 
-            PreparedStatement pst = this.conn.prepareStatement(query);
+            PreparedStatement pst = Main.connection.prepareStatement(query);
             pst.setInt(1,reiziger.getId());
             pst.execute();
             pst.close();
             return true;
         }catch(SQLException sqle){
-            System.err.println("[SQLException] Something went wrong with the SQL: " + sqle.getMessage());
+            System.err.println("[SQLException] Something went wrong with the SQL at Delete: " + sqle.getMessage());
             return false;
         }
     }
@@ -70,10 +98,10 @@ public class ReizigerDAOPsql implements ReizigerDAO{
         try{
             String query = "SELECT * FROM reiziger WHERE reiziger_id=?";
 
-            PreparedStatement pst = this.conn.prepareStatement(query);
+            PreparedStatement pst = Main.connection.prepareStatement(query);
             pst.setInt(1, id);
             ResultSet rs = pst.executeQuery();
-            
+
 
             String voorletters = null;
             String tussenvoegsel = null;
@@ -89,9 +117,10 @@ public class ReizigerDAOPsql implements ReizigerDAO{
             rs.close();
 
             Reiziger r = new Reiziger(id, voorletters, tussenvoegsel, achternaam, geboortedatum);
+            r.setAdres(adao.findByReiziger(r));
             return r;
         }catch(SQLException sqle){
-            System.err.println("[SQLException] Something went wrong with the SQL: " + sqle.getMessage());
+            System.err.println("[SQLException] Something went wrong with the SQL at findByID: " + sqle.getMessage());
             return null;
         }
     }
@@ -102,10 +131,9 @@ public class ReizigerDAOPsql implements ReizigerDAO{
         try{
             String query = "SELECT * FROM reiziger WHERE geboortedatum=?";
 
-            PreparedStatement pst = this.conn.prepareStatement(query);
+            PreparedStatement pst = Main.connection.prepareStatement(query);
             pst.setDate(1, Date.valueOf(datum));
             ResultSet rs = pst.executeQuery();
-           
 
             while(rs.next()){
                 int id = rs.getInt("reiziger_id");
@@ -113,14 +141,16 @@ public class ReizigerDAOPsql implements ReizigerDAO{
                 String tussenvoegsel = rs.getString("tussenvoegsel");
                 String achternaam = rs.getString("achternaam");
                 Reiziger r = new Reiziger(id, voorletters, tussenvoegsel, achternaam, Date.valueOf(datum));
+                r.setAdres(adao.findByReiziger(r));
                 reizigerList.add(r);
             }
             pst.close();
+
             rs.close();
 
             return reizigerList;
         }catch(SQLException sqle){
-            System.err.println("[SQLException] Something went wrong with the SQL: " + sqle.getMessage());
+            System.err.println("[SQLException] Something went wrong with the SQL at findByGB: " + sqle.getMessage());
             return reizigerList;
         }
     }
@@ -131,9 +161,8 @@ public class ReizigerDAOPsql implements ReizigerDAO{
         try{
             String query = "SELECT * FROM reiziger";
 
-            PreparedStatement pst = this.conn.prepareStatement(query);
+            PreparedStatement pst = Main.connection.prepareStatement(query);
             ResultSet rs = pst.executeQuery();
-            
 
             while(rs.next()){
                 int id = rs.getInt("reiziger_id");
@@ -143,6 +172,7 @@ public class ReizigerDAOPsql implements ReizigerDAO{
                 Date geboortedatum = rs.getDate("geboortedatum");
 
                 Reiziger r = new Reiziger(id, voorletters, tussenvoegsel, achternaam, geboortedatum);
+                r.setAdres(adao.findByReiziger(r));
                 reizigerList.add(r);
             }
             pst.close();
@@ -153,4 +183,11 @@ public class ReizigerDAOPsql implements ReizigerDAO{
             return reizigerList;
         }
     }
+
+    @Override
+    public void setAdao(AdresDAO adao){
+        this.adao = adao;
+    }
+    @Override
+    public void setOvckdao(OVChipkaartDAO ovckdao){this.ovckdao = ovckdao;}
 }

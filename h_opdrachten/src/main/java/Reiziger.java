@@ -15,8 +15,8 @@ public class Reiziger {
     private Date geboortedatum;
     @OneToOne(cascade = CascadeType.MERGE) @Transient
     private Adres adres;
-//    @OneToMany
-//    private List<OVChipkaart> ovChipKaarten;
+    @OneToMany
+    private List<OVChipkaart> ovChipKaarten;
 
     public Reiziger(){}
 
@@ -83,13 +83,13 @@ public class Reiziger {
     public Adres getAdres(){
         return adres;
     }
-//    public void addOVChipkaart(OVChipkaart ovChipkaart){
-//        ovChipKaarten.add(ovChipkaart);
-//    }
-//
-//    public List<OVChipkaart> getOvChipKaarten(){
-//        return ovChipKaarten;
-//    }
+    public void addOVChipkaart(OVChipkaart ovChipkaart){
+        ovChipKaarten.add(ovChipkaart);
+    }
+
+    public List<OVChipkaart> getOvChipKaarten(){
+        return ovChipKaarten;
+    }
 
     @Override
     public String toString(){

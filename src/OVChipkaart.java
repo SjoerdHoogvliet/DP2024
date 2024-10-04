@@ -66,6 +66,9 @@ public class OVChipkaart {
         producten.remove(product);
         product.deleteChipkaart(this);
     }
+    public List<Product> getProducten(){
+        return producten;
+    }
 
     @Override
     public String toString(){

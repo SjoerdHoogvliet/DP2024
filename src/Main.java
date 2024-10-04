@@ -11,13 +11,16 @@ public class Main {
             ReizigerDAO rdao = new ReizigerDAOPsql();
             AdresDAO adao = new AdresDAOPsql();
             OVChipkaartDAO ovckdao = new OVChipkaartDAOPsql();
+            ProductDAO pdao = new ProductDAOPsql();
             rdao.setAdao(adao);
             rdao.setOvckdao(ovckdao);
+            pdao.setOvckdao(ovckdao);
 
             Main.getConnection();
             Main.testReizigerDAO(rdao);
             Main.testAdresDao(adao, rdao);
             Main.testOVChipkaartDAO(ovckdao, rdao);
+            Main.testProductDAO(pdao, ovckdao, rdao);
             Main.closeConnection();
         }catch(SQLException sqle){
             System.err.println("[SQLException] Something went wrong with getting the SQL: " + sqle.getMessage());

@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AdresDAOPsql implements AdresDAO{
-//    private Connection conn = Main.connection;
-
     @Override
     public boolean save(Adres adres) {
         try{

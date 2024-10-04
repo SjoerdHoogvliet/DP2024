@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ReizigerDAOPsql implements ReizigerDAO{
-//    private Connection conn = Main.connection;
     private AdresDAO adao;
     private OVChipkaartDAO ovckdao;
 
